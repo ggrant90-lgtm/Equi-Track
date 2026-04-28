@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
 import { BreedersProSessionProvider } from "@/components/breeders-pro/BreedersProSession";
 import { ModuleGate } from "@/components/modules/ModuleGate";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 
 const BREEDERS_PRO_DESCRIPTION =
   "A premium breeding management tool for professional equine operations. Track embryos, manage donor mares, stallions, surrogates, and OPU/ICSI pipelines end-to-end.";
@@ -64,6 +65,48 @@ export default async function BreedersProLayout({
 
   const barnLabel = `${barnName} · ${new Date().getFullYear()}`;
 
+  // Progressive nav disclosure — count rows the user actually has,
+  // hide nav items for empty stages so a brand-new program doesn't
+  // see a wall of unused capabilities. Each query uses head:true so
+  // we pay for a count, not row data. Scoped to the user's
+  // operational barns (owned + editor membership).
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  let hasEmbryos = false;
+  let hasStallions = false;
+  let hasSurrogates = false;
+  let hasFoalings = false;
+  if (barnIds.length > 0) {
+    const [embryosRes, stallionsRes, surrogatesRes, foalingsRes] =
+      await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("embryos")
+          .select("id", { count: "exact", head: true })
+          .in("barn_id", barnIds),
+        supabase
+          .from("horses")
+          .select("id", { count: "exact", head: true })
+          .in("barn_id", barnIds)
+          .eq("archived", false)
+          .in("breeding_role", ["stallion", "multiple"]),
+        supabase
+          .from("horses")
+          .select("id", { count: "exact", head: true })
+          .in("barn_id", barnIds)
+          .eq("archived", false)
+          .in("breeding_role", ["recipient", "multiple"]),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any)
+          .from("foalings")
+          .select("id", { count: "exact", head: true })
+          .in("barn_id", barnIds),
+      ]);
+    hasEmbryos = (embryosRes.count ?? 0) > 0;
+    hasStallions = (stallionsRes.count ?? 0) > 0;
+    hasSurrogates = (surrogatesRes.count ?? 0) > 0;
+    hasFoalings = (foalingsRes.count ?? 0) > 0;
+  }
+
   return (
     <ModuleGate module="breeders_pro" description={BREEDERS_PRO_DESCRIPTION}>
       <BreedersProSessionProvider
@@ -72,6 +115,12 @@ export default async function BreedersProLayout({
           userInitials: initials,
           userRole: "Program Director",
           barnLabel,
+          navCounts: {
+            hasEmbryos,
+            hasStallions,
+            hasSurrogates,
+            hasFoalings,
+          },
         }}
       >
         {children}

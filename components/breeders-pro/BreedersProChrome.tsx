@@ -64,37 +64,58 @@ export function BreedersProChrome({
   // placeholders so users aren't surprised by a visual context switch.
   // As each pass lands, move the corresponding item out of `placeholders`
   // and into `items`.
+  // Progressive disclosure — items the user has data for show up,
+  // empty ones stay hidden so a new program isn't staring at a wall
+  // of unused capabilities. Overview, Donor Mares, and Pregnancies
+  // are always visible; the rest reveal as data appears. Counts come
+  // from the BreedersProSession context (computed server-side in
+  // the BP layout).
+  const navCounts = session.navCounts;
+  const workspaceItems: NavItem[] = [
+    { href: "/breeders-pro/overview", label: "Overview", icon: <IconGrid /> },
+  ];
+  if (navCounts.hasEmbryos) {
+    workspaceItems.push({
+      href: "/breeders-pro/embryos",
+      label: "Embryo Bank",
+      icon: <IconEmbryo />,
+    });
+  }
+  workspaceItems.push({
+    href: "/breeders-pro/donors",
+    label: "Donor Mares",
+    icon: <IconDonor />,
+  });
+  if (navCounts.hasStallions) {
+    workspaceItems.push({
+      href: "/breeders-pro/stallions",
+      label: "Stallions",
+      icon: <IconDiamond />,
+    });
+  }
+  if (navCounts.hasSurrogates) {
+    workspaceItems.push({
+      href: "/breeders-pro/surrogates",
+      label: "Surrogates",
+      icon: <IconSurrogate />,
+    });
+  }
+  workspaceItems.push({
+    href: "/breeders-pro/pregnancies",
+    label: "Pregnancies",
+    icon: <IconPregnant />,
+  });
+  if (navCounts.hasFoalings) {
+    workspaceItems.push({
+      href: "/breeders-pro/foalings",
+      label: "Foaling Records",
+      icon: <IconFoal />,
+    });
+  }
+
   const workspace: NavGroup = {
     label: "Workspace",
-    items: [
-      { href: "/breeders-pro/overview", label: "Overview", icon: <IconGrid /> },
-      { href: "/breeders-pro/embryos", label: "Embryo Bank", icon: <IconEmbryo /> },
-      {
-        href: "/breeders-pro/donors",
-        label: "Donor Mares",
-        icon: <IconDonor />,
-      },
-      {
-        href: "/breeders-pro/stallions",
-        label: "Stallions",
-        icon: <IconDiamond />,
-      },
-      {
-        href: "/breeders-pro/surrogates",
-        label: "Surrogates",
-        icon: <IconSurrogate />,
-      },
-      {
-        href: "/breeders-pro/pregnancies",
-        label: "Pregnancies",
-        icon: <IconPregnant />,
-      },
-      {
-        href: "/breeders-pro/foalings",
-        label: "Foaling Records",
-        icon: <IconFoal />,
-      },
-    ],
+    items: workspaceItems,
   };
 
   const workspacePlaceholders: NavItem[] = [];
