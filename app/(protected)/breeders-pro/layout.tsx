@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
 import { BreedersProSessionProvider } from "@/components/breeders-pro/BreedersProSession";
 import { ModuleGate } from "@/components/modules/ModuleGate";
 
@@ -39,8 +38,20 @@ export default async function BreedersProLayout({
     user.email?.split("@")[0] ||
     "Member";
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnName = ctx?.barn?.name ?? "No Barn";
+  // Breeders Pro now scopes across all operational barns, so the
+  // chrome label reads "All Barns" when the user owns/manages more
+  // than one. Single-barn users still see their barn's name.
+  const { data: ownedBarnsForLabel } = await supabase
+    .from("barns")
+    .select("id, name")
+    .eq("owner_id", user.id);
+  const ownedRows = (ownedBarnsForLabel ?? []) as Array<{ id: string; name: string }>;
+  const barnName =
+    ownedRows.length === 0
+      ? "No Barn"
+      : ownedRows.length === 1
+        ? ownedRows[0].name
+        : "All Barns";
 
   const initials =
     displayName

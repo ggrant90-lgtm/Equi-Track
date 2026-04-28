@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { getHorseDisplayName } from "@/lib/horse-name";
 import { FoalingRecordsClient } from "./FoalingRecordsClient";
 
@@ -11,16 +11,15 @@ export default async function FoalingRecordsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) redirect("/breeders-pro");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/breeders-pro");
 
-  // Fetch all foalings for this barn
+  // Fetch all foalings across the user's operational barns.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: foalings } = await (supabase as any)
     .from("foalings")
     .select("*")
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .order("foaling_date", { ascending: false });
 
   // Collect horse IDs for name lookups

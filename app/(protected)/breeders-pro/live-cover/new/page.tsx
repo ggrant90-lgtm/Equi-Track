@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
-import { canUserEditHorse } from "@/lib/horse-access";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { NewLiveCoverClient } from "./NewLiveCoverClient";
 
 /**
@@ -18,18 +17,18 @@ export default async function NewLiveCoverPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) redirect("/breeders-pro");
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) redirect("/breeders-pro");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/breeders-pro");
+  // Anchor barn for the new live-cover row. The action validates
+  // per-horse access, so the actual barn assignment can be derived
+  // from the picked mare downstream if needed.
+  const barnId = barnIds[0];
 
   // Existing mares — donor, recipient, or multiple breeding roles.
   const { data: mares } = await supabase
     .from("horses")
     .select("id, name, registration_number, breeding_role")
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .eq("archived", false)
     .in("breeding_role", ["donor", "recipient", "multiple"])
     .order("name", { ascending: true });
@@ -38,7 +37,7 @@ export default async function NewLiveCoverPage() {
   const { data: stallions } = await supabase
     .from("horses")
     .select("id, name, registration_number, breeding_role")
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .eq("archived", false)
     .in("breeding_role", ["stallion", "multiple"])
     .order("name", { ascending: true });

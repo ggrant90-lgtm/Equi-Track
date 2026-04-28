@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import type { Embryo, Flush, Horse } from "@/lib/types";
 import { StallionsListClient } from "./StallionsListClient";
 
@@ -17,16 +17,15 @@ export default async function StallionsListPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  if (!ctx) redirect("/breeders-pro");
-  const barnId = ctx.barn.id;
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/breeders-pro");
 
   const { data: stallionHorsesRaw } = await supabase
     .from("horses")
     .select(
       "id, name, barn_name, primary_name_pref, registration_number, breed, color, breeding_role, stallion_stud_fee, archived",
     )
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .in("breeding_role", ["stallion", "multiple"])
     .order("name", { ascending: true });
 

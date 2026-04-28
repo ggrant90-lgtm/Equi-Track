@@ -1,4 +1,4 @@
-import { getActiveBarnContext } from "@/lib/barn-session";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { getHorseDisplayName } from "@/lib/horse-name";
 import { createServerComponentClient } from "@/lib/supabase-server";
 import type { Pregnancy } from "@/lib/types";
@@ -12,14 +12,14 @@ export default async function PregnanciesPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  if (!ctx) redirect("/dashboard");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/dashboard");
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: pregnanciesRaw, error } = await (supabase as any)
     .from("pregnancies")
     .select("*")
-    .eq("barn_id", ctx.barn.id)
+    .in("barn_id", barnIds)
     .order("expected_foaling_date", { ascending: true });
 
   if (error) {

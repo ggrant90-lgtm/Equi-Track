@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
-import { canUserEditHorse } from "@/lib/horse-access";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { BreedingHubClient } from "./BreedingHubClient";
 
 /**
@@ -18,12 +17,8 @@ export default async function BreedingHubPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) redirect("/breeders-pro");
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) redirect("/breeders-pro");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/breeders-pro");
 
   return <BreedingHubClient />;
 }

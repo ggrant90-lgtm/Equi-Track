@@ -79,6 +79,43 @@ export async function getPrimaryBarnContext(
   return { barn, membership: memRow };
 }
 
+/**
+ * Every barn id the user can read + write Breeders Pro / Business Pro
+ * data for. Includes barns they own AND barns where they're an
+ * editor-or-higher member. View-only members and stall-key holders
+ * are excluded — those access paths grant horse-level views, not
+ * barn-level operational surfaces.
+ *
+ * Used by BP pages to scope queries across the user's whole
+ * operation rather than just whichever barn they last switched to in
+ * the sidebar.
+ */
+export async function getUserOperationalBarnIds(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<string[]> {
+  const [ownedRes, memberRes] = await Promise.all([
+    supabase.from("barns").select("id").eq("owner_id", userId),
+    supabase
+      .from("barn_members")
+      .select("barn_id, role")
+      .eq("user_id", userId)
+      .or("status.eq.active,status.is.null"),
+  ]);
+
+  const ownedIds = ((ownedRes.data ?? []) as Array<{ id: string }>).map(
+    (b) => b.id,
+  );
+  const memberIds = ((memberRes.data ?? []) as Array<{
+    barn_id: string;
+    role: string | null;
+  }>)
+    .filter((m) => m.role === "owner" || m.role === "admin" || m.role === "editor")
+    .map((m) => m.barn_id);
+
+  return [...new Set([...ownedIds, ...memberIds])];
+}
+
 export async function userHasAnyBarn(
   supabase: SupabaseClient<Database>,
   userId: string,

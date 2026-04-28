@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
-import { canUserEditHorse } from "@/lib/horse-access";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { NewOPUClient } from "./NewOPUClient";
 
 /**
@@ -20,18 +19,17 @@ export default async function NewOPUPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) redirect("/breeders-pro");
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) redirect("/breeders-pro");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) redirect("/breeders-pro");
+  // Anchor barn for the new OPU session. Per-horse access is checked
+  // by the action when the donor is finalized.
+  const barnId = barnIds[0];
 
   // Fetch donor mares for the donor picker — donor and multiple roles.
   const { data: mares } = await supabase
     .from("horses")
     .select("id, name, registration_number, breeding_role")
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .eq("archived", false)
     .in("breeding_role", ["donor", "multiple"])
     .order("name", { ascending: true });

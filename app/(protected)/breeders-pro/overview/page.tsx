@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@/lib/supabase-server";
-import { getActiveBarnContext } from "@/lib/barn-session";
+import { getUserOperationalBarnIds } from "@/lib/barn-session";
 import { getHorseDisplayName } from "@/lib/horse-name";
 import { getOnboardingState } from "@/lib/onboarding-query";
 import { BreedersProOnboardingLauncher } from "@/components/onboarding/BreedersProOnboardingLauncher";
+import { BreedersProWelcome } from "@/components/breeders-pro/BreedersProWelcome";
 import { OverviewClient } from "./OverviewClient";
 import type { Pregnancy } from "@/lib/types";
 
@@ -14,9 +15,8 @@ export default async function OverviewPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/signin");
 
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) redirect("/breeders-pro");
+  const barnIds = await getUserOperationalBarnIds(supabase, user.id);
+  if (barnIds.length === 0) return <BreedersProWelcome />;
 
   // ── Parallel data fetches ──
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,61 +40,64 @@ export default async function OverviewPage() {
     db
       .from("pregnancies")
       .select("*")
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .in("status", ["pending_check", "confirmed"])
       .order("expected_foaling_date", { ascending: true }),
     // Embryos in bank
     db
       .from("embryos")
       .select("id, status")
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .in("status", ["in_bank_fresh", "in_bank_frozen"]),
     // Donor count
     supabase
       .from("horses")
       .select("id", { count: "exact", head: true })
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .eq("archived", false)
       .in("breeding_role", ["donor", "multiple"]),
     // Stallion count
     supabase
       .from("horses")
       .select("id", { count: "exact", head: true })
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .eq("archived", false)
       .in("breeding_role", ["stallion", "multiple"]),
     // Surrogate count
     supabase
       .from("horses")
       .select("id", { count: "exact", head: true })
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .eq("archived", false)
       .in("breeding_role", ["recipient", "multiple"]),
     // Foals this season
     db
       .from("foalings")
       .select("id", { count: "exact", head: true })
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .gte("foaling_date", yearStart),
     // Recent foalings (last 5)
     db
       .from("foalings")
       .select("id, foaling_date, foal_sex, foaling_type, foal_horse_id, surrogate_horse_id")
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .order("foaling_date", { ascending: false })
       .limit(5),
     // Mares in heat
     supabase
       .from("horses")
       .select("id, name, barn_name, primary_name_pref")
-      .eq("barn_id", barnId)
+      .in("barn_id", barnIds)
       .eq("archived", false)
       .eq("reproductive_status", "in_cycle"),
-    // Recent breeding activity (breed_data logs)
+    // Recent breeding activity (breed_data logs) — scoped via the
+    // logged_at_barn_id column so we don't have to JOIN through
+    // horses to filter to the user's operational barns.
     supabase
       .from("activity_log")
       .select("id, horse_id, activity_type, notes, details, performed_at, created_at")
       .eq("activity_type", "breed_data")
+      .in("logged_at_barn_id", barnIds)
       .order("created_at", { ascending: false })
       .limit(10),
   ]);
@@ -125,19 +128,30 @@ export default async function OverviewPage() {
     }
   }
 
-  // Filter breed logs to only this barn's horses
-  const barnHorseIds = new Set(Object.keys(horseNames));
-  const filteredBreedLogs = (recentBreedLogs ?? []).filter(
-    (l: { horse_id: string }) => barnHorseIds.has(l.horse_id) || horseIds.has(l.horse_id),
-  );
+  // Breed logs are already scoped to the user's barns via
+  // logged_at_barn_id, so no further filtering is needed.
+  const filteredBreedLogs = recentBreedLogs ?? [];
 
   // Onboarding state + mares for the Breeders Pro wizard launcher.
+  // The launcher needs a single anchor barn for any new horses it
+  // creates; pick the first user-owned barn (falls back to the first
+  // operational barn for editor-only users).
   const onboardingState = await getOnboardingState(supabase, user.id);
+  const { data: ownedFirstRow } = await supabase
+    .from("barns")
+    .select("id")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const onboardingBarnId =
+    (ownedFirstRow as { id?: string } | null)?.id ?? barnIds[0];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: mareRows } = await (supabase as any)
     .from("horses")
     .select("id, name, breed, photo_url")
-    .eq("barn_id", barnId)
+    .in("barn_id", barnIds)
     .eq("archived", false)
     .or(
       "sex.ilike.%mare%,breeding_role.in.(donor,recipient,multiple)",
@@ -154,7 +168,7 @@ export default async function OverviewPage() {
   return (
     <>
       <BreedersProOnboardingLauncher
-        barnId={barnId}
+        barnId={onboardingBarnId}
         onboardingState={onboardingState}
         existingMares={existingMares}
       />

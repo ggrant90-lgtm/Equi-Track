@@ -143,7 +143,7 @@ export function DonorBreedingSection({
       )}
 
       <Link
-        href="/breeders-pro"
+        href="/breeders-pro/embryos"
         className="inline-flex items-center gap-1 text-sm text-brass-gold hover:underline"
       >
         View Embryo Bank

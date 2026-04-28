@@ -68,7 +68,7 @@ export function BreedersProChrome({
     label: "Workspace",
     items: [
       { href: "/breeders-pro/overview", label: "Overview", icon: <IconGrid /> },
-      { href: "/breeders-pro", label: "Embryo Bank", icon: <IconEmbryo /> },
+      { href: "/breeders-pro/embryos", label: "Embryo Bank", icon: <IconEmbryo /> },
       {
         href: "/breeders-pro/donors",
         label: "Donor Mares",
@@ -108,7 +108,6 @@ export function BreedersProChrome({
   const isActive = (href: string) => {
     if (href === "#") return false;
     const [path] = href.split("?");
-    if (path === "/breeders-pro") return pathname === "/breeders-pro";
     return pathname.startsWith(path);
   };
 
