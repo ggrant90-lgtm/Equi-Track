@@ -26,17 +26,22 @@ export async function recordOPUAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const barnId = formData.get("barn_id") as string;
-  if (!barnId) return { error: "No barn context" };
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) return { error: "No permission" };
+  const formBarnId = formData.get("barn_id") as string;
+  if (!formBarnId) return { error: "No barn context" };
 
   // --- Resolve or create donor mare ---
+  // For an existing donor we anchor the OPU session to HER barn so
+  // cross-barn picks (Breeders Pro now spans every operational barn)
+  // don't fail validation against the page's anchor.
   let donorHorseId = formData.get("donor_horse_id") as string | null;
+  let resolvedBarnId: string | null = null;
   const donorMode = formData.get("donor_mode") as string;
 
   if (donorMode === "new") {
+    const canEdit = await canUserEditHorse(supabase, user.id, formBarnId);
+    if (!canEdit) return { error: "No permission" };
+    resolvedBarnId = formBarnId;
+
     const donorName = (formData.get("donor_name") as string)?.trim();
     if (!donorName) return { error: "Donor mare name is required" };
 
@@ -44,7 +49,7 @@ export async function recordOPUAction(
     const { data: newHorse, error: horseErr } = await (supabase as any)
       .from("horses")
       .insert({
-        barn_id: barnId,
+        barn_id: resolvedBarnId,
         name: donorName,
         sex: "mare",
         breeding_role: "donor",
@@ -63,9 +68,23 @@ export async function recordOPUAction(
     if (horseErr || !newHorse)
       return { error: horseErr?.message ?? "Failed to create donor mare" };
     donorHorseId = newHorse.id;
+  } else {
+    if (!donorHorseId) return { error: "Donor mare is required" };
+    const { data: donorRow } = await supabase
+      .from("horses")
+      .select("barn_id")
+      .eq("id", donorHorseId)
+      .maybeSingle();
+    if (!donorRow) return { error: "Donor mare not found" };
+    resolvedBarnId = (donorRow as { barn_id: string }).barn_id;
+    const canEdit = await canUserEditHorse(supabase, user.id, resolvedBarnId);
+    if (!canEdit) {
+      return { error: "No permission to record this for that barn" };
+    }
   }
 
   if (!donorHorseId) return { error: "Donor mare is required" };
+  const barnId = resolvedBarnId;
 
   // --- Parse form fields ---
   const opuDate =

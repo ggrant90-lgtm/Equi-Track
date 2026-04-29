@@ -138,22 +138,27 @@ export async function createFlushEventFirstAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Active barn from cookie-driven context
-  const { getActiveBarnContext } = await import("@/lib/barn-session");
-  const ctx = await getActiveBarnContext(supabase, user.id);
-  const barnId = ctx?.barn?.id;
-  if (!barnId) return { error: "No active barn" };
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) return { error: "No permission" };
-
   // ---------- Donor mare input (existing OR new) ----------
+  // The donor's barn anchors the new flush row — Breeders Pro now
+  // shows donors across every operational barn, so we can't assume
+  // the active-barn cookie matches the picked donor. For existing
+  // donors we resolve the barn from the horse row; for new donors
+  // we fall back to the active barn (the new horse will be created
+  // there).
   const donorMode = String(formData.get("donor_mode") ?? "new");
   let donorInput: Record<string, unknown> | null = null;
+  let resolvedDonorBarnId: string | null = null;
   if (donorMode === "existing") {
     const id = String(formData.get("donor_horse_id") ?? "").trim();
     if (!id) return { error: "Select a donor mare or add a new one" };
     donorInput = { id };
+    const { data: donorRow } = await supabase
+      .from("horses")
+      .select("barn_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!donorRow) return { error: "Donor mare not found" };
+    resolvedDonorBarnId = (donorRow as { barn_id: string }).barn_id;
   } else {
     const name = String(formData.get("donor_name") ?? "").trim();
     if (!name) return { error: "Donor mare name is required" };
@@ -167,6 +172,23 @@ export async function createFlushEventFirstAction(
         String(formData.get("donor_registration_number") ?? "").trim() ||
         null,
     };
+  }
+
+  // Resolve the flush's anchor barn:
+  //   - existing donor → use the donor's barn
+  //   - new donor → fall back to the active barn cookie so the new
+  //                 horse is created in the right place
+  let barnId: string | null = resolvedDonorBarnId;
+  if (!barnId) {
+    const { getActiveBarnContext } = await import("@/lib/barn-session");
+    const ctx = await getActiveBarnContext(supabase, user.id);
+    barnId = ctx?.barn?.id ?? null;
+  }
+  if (!barnId) return { error: "No active barn" };
+
+  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
+  if (!canEdit) {
+    return { error: "No permission to record a flush in that barn" };
   }
 
   // ---------- Sire input (existing OR new barn stallion) ----------

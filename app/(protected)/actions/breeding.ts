@@ -25,17 +25,24 @@ export async function recordLiveCoverAction(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const barnId = formData.get("barn_id") as string;
-  if (!barnId) return { error: "Missing barn_id" };
-
-  const canEdit = await canUserEditHorse(supabase, user.id, barnId);
-  if (!canEdit) return { error: "No permission to edit this barn" };
+  const formBarnId = formData.get("barn_id") as string;
+  if (!formBarnId) return { error: "Missing barn_id" };
 
   // ---- Mare (donor / carrier): either existing id or inline-create ----
+  // Resolve the mare first so we can use HER barn for the new live-cover
+  // row when she's an existing horse. Breeders Pro is cross-barn now,
+  // so a mare picked from Barn B shouldn't end up with a Barn A
+  // pregnancy because the page anchored there.
   let mareId: string;
+  let resolvedBarnId: string | null = null;
   const mareMode = formData.get("mare_mode") as string;
 
   if (mareMode === "new") {
+    // New horse goes into the page's anchor barn.
+    const canEdit = await canUserEditHorse(supabase, user.id, formBarnId);
+    if (!canEdit) return { error: "No permission to edit this barn" };
+    resolvedBarnId = formBarnId;
+
     const mareName = (formData.get("mare_name") as string)?.trim();
     if (!mareName) return { error: "Mare name is required" };
 
@@ -43,7 +50,7 @@ export async function recordLiveCoverAction(formData: FormData) {
     const { data: newMare, error: mareErr } = await (supabase as any)
       .from("horses")
       .insert({
-        barn_id: barnId,
+        barn_id: resolvedBarnId,
         name: mareName,
         sex: "mare",
         breeding_role: "donor",
@@ -65,7 +72,19 @@ export async function recordLiveCoverAction(formData: FormData) {
   } else {
     mareId = formData.get("mare_id") as string;
     if (!mareId) return { error: "Mare is required" };
+    const { data: mareRow } = await supabase
+      .from("horses")
+      .select("barn_id")
+      .eq("id", mareId)
+      .maybeSingle();
+    if (!mareRow) return { error: "Mare not found" };
+    resolvedBarnId = (mareRow as { barn_id: string }).barn_id;
+    const canEdit = await canUserEditHorse(supabase, user.id, resolvedBarnId);
+    if (!canEdit) {
+      return { error: "No permission to record this for that barn" };
+    }
   }
+  const barnId = resolvedBarnId;
 
   // ---- Sire: either existing id or inline-create ----
   let stallionId: string;
