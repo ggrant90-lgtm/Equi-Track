@@ -15,6 +15,8 @@ import {
   logPregnancyCheckAction,
   recordFoalingAction,
   confirmSurvivalAction,
+  markPregnancyLostAction,
+  deletePregnancyAction,
 } from "@/app/(protected)/actions/pregnancy";
 import { BreedersProChrome } from "@/components/breeders-pro/BreedersProChrome";
 
@@ -94,6 +96,8 @@ export function PregnancyDetailClient({
   const router = useRouter();
   const [checkModal, setCheckModal] = useState<string | null>(null);
   const [showFoalingModal, setShowFoalingModal] = useState(false);
+  const [showLostModal, setShowLostModal] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -183,6 +187,36 @@ export function PregnancyDetailClient({
     router.refresh();
   }
 
+  async function handleMarkLostSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    const result = await markPregnancyLostAction(pregnancy.id, formData);
+    if (result.error) {
+      setError(result.error);
+      setSaving(false);
+      return;
+    }
+    setShowLostModal(false);
+    setSaving(false);
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    setSaving(true);
+    setError(null);
+    const result = await deletePregnancyAction(pregnancy.id);
+    if (result.error) {
+      setError(result.error);
+      setSaving(false);
+      setConfirmingDelete(false);
+      return;
+    }
+    // No router.refresh() — the page is gone.
+    router.push("/breeders-pro/pregnancies");
+  }
+
   return (
     <BreedersProChrome breadcrumb={breadcrumb}>
       {/* ============== HEADER ============== */}
@@ -264,6 +298,67 @@ export function PregnancyDetailClient({
               >
                 {saving ? "Saving…" : "Confirm 30-Day Survival"}
               </button>
+            )}
+            {canEdit && isActive && (
+              <button
+                type="button"
+                className="bp-btn"
+                onClick={() => {
+                  setError(null);
+                  setShowLostModal(true);
+                }}
+                title="Record this pregnancy as lost"
+              >
+                Mark Lost
+              </button>
+            )}
+            {canEdit && (
+              confirmingDelete ? (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "var(--bp-ink-secondary)",
+                    }}
+                  >
+                    Delete this pregnancy?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={saving}
+                    className="bp-btn"
+                    style={{
+                      background: "#b8421f",
+                      color: "white",
+                      borderColor: "#b8421f",
+                    }}
+                  >
+                    {saving ? "Deleting…" : "Yes, delete"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    disabled={saving}
+                    className="bp-btn"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="bp-btn"
+                  style={{ color: "#b8421f" }}
+                  onClick={() => {
+                    setError(null);
+                    setConfirmingDelete(true);
+                  }}
+                  title="Delete this pregnancy (use only if it was created in error)"
+                >
+                  Delete
+                </button>
+              )
             )}
           </div>
         </div>
@@ -978,6 +1073,105 @@ export function PregnancyDetailClient({
                   disabled={saving}
                 >
                   {saving ? "Recording…" : "Record Foaling"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============== MARK LOST MODAL ============== */}
+      {showLostModal && (
+        <div
+          className="bp-modal-overlay"
+          onClick={() => !saving && setShowLostModal(false)}
+        >
+          <div
+            className="bp-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bp-modal-header">
+              <div className="bp-modal-title">Mark Pregnancy Lost</div>
+              <button
+                type="button"
+                className="bp-modal-close"
+                aria-label="Close"
+                onClick={() => !saving && setShowLostModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {error && <div className="bp-modal-error">{error}</div>}
+
+            <form onSubmit={handleMarkLostSubmit}>
+              <div className="bp-modal-body">
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--bp-ink-secondary)",
+                    marginBottom: 12,
+                  }}
+                >
+                  Records this pregnancy as lost.
+                  {pregnancy.donor_horse_id ? (
+                    <> The donor mare&apos;s lifetime loss count will be incremented.</>
+                  ) : null}
+                  {pregnancy.embryo_id ? (
+                    <> The embryo will be marked lost.</>
+                  ) : null}
+                  {pregnancy.surrogate_horse_id ? (
+                    <> The surrogate&apos;s status will return to open.</>
+                  ) : null}
+                </p>
+
+                <label className="bp-field">
+                  <span className="bp-field-label">When was the loss</span>
+                  <select name="loss_kind" defaultValue="lost_late" className="bp-input">
+                    <option value="lost_early">Early loss (≤90 days)</option>
+                    <option value="lost_late">Late loss (after 90 days)</option>
+                    <option value="aborted">Aborted</option>
+                  </select>
+                </label>
+
+                <label className="bp-field">
+                  <span className="bp-field-label">Date of loss</span>
+                  <input
+                    type="date"
+                    name="loss_date"
+                    defaultValue={new Date().toISOString().slice(0, 10)}
+                    className="bp-input"
+                  />
+                </label>
+
+                <label className="bp-field">
+                  <span className="bp-field-label">Reason (optional)</span>
+                  <textarea
+                    name="loss_reason"
+                    rows={3}
+                    placeholder="Twins reduced, placentitis, dystocia, unknown, etc."
+                    className="bp-input"
+                  />
+                </label>
+              </div>
+              <div className="bp-modal-actions">
+                <button
+                  type="button"
+                  className="bp-btn"
+                  onClick={() => setShowLostModal(false)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bp-btn bp-primary"
+                  disabled={saving}
+                  style={{ background: "#b8421f", borderColor: "#b8421f" }}
+                >
+                  {saving ? "Saving…" : "Mark Lost"}
                 </button>
               </div>
             </form>

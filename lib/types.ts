@@ -254,6 +254,7 @@ export interface Horse {
   stallion_stud_fee: number | null;
   lifetime_embryo_count: number;
   lifetime_live_foal_count: number;
+  lifetime_loss_count: number;
   sire_horse_id: string | null;
   dam_horse_id: string | null;
   /** Lifecycle disposition (Breeders Pro) — what happened to this horse

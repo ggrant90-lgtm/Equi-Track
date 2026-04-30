@@ -873,6 +873,20 @@ export function DonorProfileClient({
                 </span>
               </div>
               <div className="bp-info-row">
+                <span className="bp-info-key">Losses</span>
+                <span
+                  className="bp-info-value bp-mono"
+                  style={{
+                    color:
+                      (horse.lifetime_loss_count ?? 0) > 0
+                        ? "#b8421f"
+                        : undefined,
+                  }}
+                >
+                  {horse.lifetime_loss_count ?? 0}
+                </span>
+              </div>
+              <div className="bp-info-row">
                 <span className="bp-info-key">Flushes</span>
                 <span className="bp-info-value bp-mono">
                   {flushes.length}

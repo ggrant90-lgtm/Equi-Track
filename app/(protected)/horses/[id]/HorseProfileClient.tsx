@@ -980,6 +980,20 @@ export function HorseProfileClient({
                   <span className="text-xs text-barn-dark/50 block">Lifetime Live Foals</span>
                   <span className="text-sm font-medium">{horse.lifetime_live_foal_count ?? 0}</span>
                 </div>
+                <div>
+                  <span className="text-xs text-barn-dark/50 block">Lifetime Losses</span>
+                  <span
+                    className="text-sm font-medium"
+                    style={{
+                      color:
+                        (horse.lifetime_loss_count ?? 0) > 0
+                          ? "#b8421f"
+                          : undefined,
+                    }}
+                  >
+                    {horse.lifetime_loss_count ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
 
