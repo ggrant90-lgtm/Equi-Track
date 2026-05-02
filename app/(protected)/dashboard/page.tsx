@@ -360,6 +360,73 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Loggable horses for the dashboard "Add Log" modal ──
+  // Includes everything the user could plausibly create a log on:
+  //   • horses in any owned barn
+  //   • horses in any barn-key access barn
+  //   • stall-key horses (with per-horse log-type restrictions)
+  // view_only stall keys are excluded — they can't create logs.
+  // Server-side createLogAction re-checks via canUserLogOnHorse, so
+  // this list is best-effort: the worst case is a horse appears in the
+  // picker and the form rejects on submit.
+  const allAccessibleBarnIdsForLog = [
+    ...((ownedBarns ?? []) as Barn[]).map((b) => b.id),
+    ...accessBarns.map((b) => b.id),
+  ];
+  type LoggableHorse = {
+    id: string;
+    name: string;
+    photo_url: string | null;
+    barn_name: string | null;
+    /** null = all log types allowed; array = restricted (stall-key custom permission) */
+    allowed_log_types: string[] | null;
+  };
+  const loggableHorseMap = new Map<string, LoggableHorse>();
+  if (allAccessibleBarnIdsForLog.length > 0) {
+    const { data: barnHorses } = await supabase
+      .from("horses")
+      .select("id, name, photo_url, barn_name, barn_id")
+      .in("barn_id", allAccessibleBarnIdsForLog)
+      .eq("archived", false)
+      .order("name", { ascending: true })
+      .limit(500);
+    for (const h of (barnHorses ?? []) as Array<{
+      id: string;
+      name: string;
+      photo_url: string | null;
+      barn_name: string | null;
+    }>) {
+      loggableHorseMap.set(h.id, {
+        id: h.id,
+        name: h.name,
+        photo_url: h.photo_url,
+        barn_name: h.barn_name,
+        allowed_log_types: null,
+      });
+    }
+  }
+  // Add stall-only horses (those whose barn isn't in the accessible
+  // set) — barn-key access overrides stall-key restrictions, so we
+  // skip stall horses already covered above.
+  for (const sh of stallHorses) {
+    if (loggableHorseMap.has(sh.id)) continue;
+    const lvl = (sh.permission_level ?? "").toLowerCase();
+    if (lvl === "view_only") continue;
+    const stallRow = stallRows.find((r) => r.horse_id === sh.id);
+    const restricted =
+      lvl === "custom" ? stallRow?.allowed_log_types ?? [] : null;
+    loggableHorseMap.set(sh.id, {
+      id: sh.id,
+      name: sh.name,
+      photo_url: sh.photo_url,
+      barn_name: sh.barn_name,
+      allowed_log_types: restricted,
+    });
+  }
+  const loggableHorses = [...loggableHorseMap.values()].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+
   // Compute effective capacity for the primary barn + build userBarns list
   // for the StallPurchaseFlow (owner-only barns). For the All Barns view
   // we need capacity + horse counts across *every* barn the user has any
@@ -453,6 +520,7 @@ export default async function DashboardPage() {
       coreOnboardingBarn={coreOnboardingBarn}
       allBarnsOverview={allBarnsOverview}
       recentBarnLogs={recentBarnLogs}
+      loggableHorses={loggableHorses}
     />
   );
 }
