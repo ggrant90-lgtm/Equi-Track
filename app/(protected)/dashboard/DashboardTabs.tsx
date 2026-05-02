@@ -1,5 +1,6 @@
 "use client";
 
+import { AddLogModal, type AddLogHorse } from "@/components/AddLogModal";
 import { CapacityBar } from "@/components/CapacityBar";
 import { HorseCard } from "@/components/HorseCard";
 import { HorsePhoto } from "@/components/HorsePhoto";
@@ -55,6 +56,7 @@ export function DashboardTabs({
   coreOnboardingBarn,
   allBarnsOverview,
   recentBarnLogs,
+  loggableHorses,
 }: {
   ownedBarns: Barn[];
   accessBarns: (Barn & { userRole: string })[];
@@ -114,6 +116,12 @@ export function DashboardTabs({
     vendor_name: string | null;
     description: string | null;
   }>;
+  /** Horses the current user can plausibly create a log entry for —
+   *  union of owned-barn horses, barn-key access horses, and stall-key
+   *  horses (excluding view_only). Drives the dashboard "Add Log"
+   *  modal's horse picker. Server-side createLogAction re-checks
+   *  permissions, so this list is best-effort. */
+  loggableHorses: AddLogHorse[];
   /** Per-barn summary rendered when the user has "All Barns" active
    *  (activeBarnId === "__all__"). Empty array otherwise — the single-
    *  barn view uses its own dedicated data and doesn't read this. */
@@ -130,6 +138,7 @@ export function DashboardTabs({
   const [tab, setTab] = useState<"my" | "access">("my");
   const [stallFlowBarnId, setStallFlowBarnId] = useState<string | null>(null);
   const [stallFlowMode, setStallFlowMode] = useState<"expand" | "build">("expand");
+  const [addLogOpen, setAddLogOpen] = useState(false);
 
   // Core onboarding wizard — auto-opens on first dashboard visit for
   // new users (when not completed + not dismissed). Auto-opens at most
@@ -150,6 +159,12 @@ export function DashboardTabs({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <AddLogModal
+        open={addLogOpen}
+        onClose={() => setAddLogOpen(false)}
+        horses={loggableHorses}
+      />
+
       <CoreOnboarding
         open={coreOpen}
         onClose={async () => {
@@ -347,6 +362,13 @@ export function DashboardTabs({
                 >
                   Add Horse
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => setAddLogOpen(true)}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-barn-dark/20 bg-white px-5 py-2.5 text-sm font-medium text-barn-dark hover:border-brass-gold"
+                >
+                  Add Log
+                </button>
                 <Link
                   href="/keys"
                   className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-barn-dark/20 bg-white px-5 py-2.5 text-sm font-medium text-barn-dark hover:border-brass-gold"

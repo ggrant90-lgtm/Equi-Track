@@ -1,5 +1,6 @@
 "use client";
 
+import { AddLogModal, type AddLogHorse } from "@/components/AddLogModal";
 import { HorseCard } from "@/components/HorseCard";
 import { linkButtonClass } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -22,6 +23,23 @@ export function HorsesGrid({
   const [q, setQ] = useState("");
   const [breedFilter, setBreedFilter] = useState("");
   const [sexFilter, setSexFilter] = useState("");
+  const [addLogOpen, setAddLogOpen] = useState(false);
+
+  // The page-level query has already RLS-filtered to horses the user can
+  // see. Permissions on log creation are re-checked server-side by
+  // createLogAction, so this list is best-effort: a view_only stall-key
+  // user might see a horse here and get rejected at submit.
+  const loggableHorses: AddLogHorse[] = useMemo(
+    () =>
+      horses.map((h) => ({
+        id: h.id,
+        name: h.name,
+        photo_url: h.photo_url ?? null,
+        barn_name: h.barn_name ?? null,
+        allowed_log_types: null,
+      })),
+    [horses],
+  );
 
   const breeds = useMemo(() => {
     const s = new Set<string>();
@@ -46,16 +64,33 @@ export function HorsesGrid({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <AddLogModal
+        open={addLogOpen}
+        onClose={() => setAddLogOpen(false)}
+        horses={loggableHorses}
+      />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-serif text-3xl font-semibold text-barn-dark">Horses</h1>
           <p className="mt-1 text-barn-dark/65">All horses in your current barn.</p>
         </div>
-        {canAdd ? (
-          <Link href="/horses/new" className={linkButtonClass("primary")}>
-            Add Horse
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {horses.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setAddLogOpen(true)}
+              className={linkButtonClass("secondary")}
+            >
+              Add Log
+            </button>
+          ) : null}
+          {canAdd ? (
+            <Link href="/horses/new" className={linkButtonClass("primary")}>
+              Add Horse
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-barn-dark/10 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end">
