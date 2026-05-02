@@ -361,18 +361,22 @@ export default async function DashboardPage() {
   }
 
   // ── Loggable horses for the dashboard "Add Log" modal ──
-  // Includes everything the user could plausibly create a log on:
-  //   • horses in any owned barn
-  //   • horses in any barn-key access barn
-  //   • stall-key horses (with per-horse log-type restrictions)
+  // Scoped to the active-barn context so the picker matches what the
+  // dashboard is showing:
+  //   • single-barn view → only horses in that barn (plus stall-key
+  //     horses that happen to live in that barn)
+  //   • All Barns view  → horses across every owned/access barn (plus
+  //     all stall-key horses)
   // view_only stall keys are excluded — they can't create logs.
   // Server-side createLogAction re-checks via canUserLogOnHorse, so
-  // this list is best-effort: the worst case is a horse appears in the
+  // this list is best-effort: worst case is a horse appears in the
   // picker and the form rejects on submit.
-  const allAccessibleBarnIdsForLog = [
-    ...((ownedBarns ?? []) as Barn[]).map((b) => b.id),
-    ...accessBarns.map((b) => b.id),
-  ];
+  const allAccessibleBarnIdsForLog = primaryBarn
+    ? [primaryBarn.id]
+    : [
+        ...((ownedBarns ?? []) as Barn[]).map((b) => b.id),
+        ...accessBarns.map((b) => b.id),
+      ];
   type LoggableHorse = {
     id: string;
     name: string;
@@ -407,9 +411,12 @@ export default async function DashboardPage() {
   }
   // Add stall-only horses (those whose barn isn't in the accessible
   // set) — barn-key access overrides stall-key restrictions, so we
-  // skip stall horses already covered above.
+  // skip stall horses already covered above. In single-barn mode, also
+  // restrict to stall horses living in the active barn so the picker
+  // matches what the dashboard is showing.
   for (const sh of stallHorses) {
     if (loggableHorseMap.has(sh.id)) continue;
+    if (primaryBarn && sh.barn_id !== primaryBarn.id) continue;
     const lvl = (sh.permission_level ?? "").toLowerCase();
     if (lvl === "view_only") continue;
     const stallRow = stallRows.find((r) => r.horse_id === sh.id);
