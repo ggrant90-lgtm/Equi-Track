@@ -8,12 +8,13 @@ export function IconHome({ className }: { className?: string }) {
 }
 
 export function IconHorses({ className }: { className?: string }) {
+  // Horse-head silhouette (chess-knight style, facing right). Hand-tuned
+  // path; if you swap this out, keep the 24×24 viewBox and currentColor
+  // stroke so it inherits the nav text color.
   return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 21v-3.5c0-1.7.9-3.3 2.4-4.2l1.6-1-1-2 1.5-1.5L8.5 7 10 3l2 1.2c2.6 0 4.9 1.7 5.6 4.2l.8 2.9c.2.9-.1 1.8-.8 2.4l-1.1.9V21" />
+      <circle cx="14.5" cy="9" r="0.7" fill="currentColor" />
     </svg>
   );
 }
