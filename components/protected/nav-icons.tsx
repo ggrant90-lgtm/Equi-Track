@@ -1,3 +1,5 @@
+import { LiaHorseHeadSolid } from "react-icons/lia";
+
 export function IconHome({ className }: { className?: string }) {
   return (
     <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -8,17 +10,10 @@ export function IconHome({ className }: { className?: string }) {
 }
 
 export function IconHorses({ className }: { className?: string }) {
-  // Side-profile horse head, facing right. Single silhouette path:
-  // ear at top, forehead curving down to muzzle on the right, jaw
-  // sweeping back to the neck which is cut off at the bottom edge.
-  // Hand-tuned for the 24×24 nav grid; keep currentColor + 1.6 stroke
-  // so it sits next to the other nav icons evenly.
-  return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M8 6c-1 1-2 3-3 6v10h7v-3c3-1 5-2 6-3l2-1c1-1 1-2 0-3v-2c-1-2-3-3-6-3l-2-1-2-4z" />
-      <circle cx="12" cy="11" r="0.7" fill="currentColor" />
-    </svg>
-  );
+  // Line Awesome's solid horse-head profile via react-icons. Size +
+  // color come from the Tailwind className the nav passes in
+  // (h-5 w-5 → 1.25rem; currentColor inherits the nav text color).
+  return <LiaHorseHeadSolid className={className} aria-hidden />;
 }
 
 export function IconKey({ className }: { className?: string }) {
