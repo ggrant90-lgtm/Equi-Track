@@ -5,6 +5,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { fullNav, reducedNav } from "@/components/nav-config";
 import { TopNav } from "@/components/TopNav";
 import { ToastProvider } from "@/components/ui/Toast";
+import { BarnPilot } from "@/components/assistant/BarnPilot";
 import { supabase } from "@/lib/supabase";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -96,6 +97,7 @@ export function ProtectedChrome({
           <MobileBottomNav navItems={navItems} pathname={pathname} />
         </div>
       </div>
+      <BarnPilot />
     </ToastProvider>
   );
 }
