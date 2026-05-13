@@ -70,30 +70,36 @@ export default async function AdminPage() {
     );
   }
 
-  // Get owner emails + all users for the Users table
-  const ownerIds = [...new Set((barns ?? []).map((b) => b.owner_id).filter(Boolean))];
-  let ownerEmails: Record<string, string> = {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let allAuthUsers: any[] = [];
-  if (ownerIds.length > 0 || true) {
-    const { data: users } = await adminClient.auth.admin.listUsers();
-    allAuthUsers = users?.users ?? [];
-    ownerEmails = allAuthUsers.reduce(
-      (acc, u) => {
-        if (u.email) acc[u.id] = u.email;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-  }
-
-  // Fetch all profiles for the Users table (feature toggles)
+  // Fetch all profiles for owner emails + Users table (feature toggles)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: allProfiles } = await (adminClient as any)
     .from("profiles")
     .select(
-      "id, full_name, has_breeders_pro, has_business_pro, has_document_scanner",
+      "id, email, full_name, has_breeders_pro, has_business_pro, has_document_scanner",
     );
+
+  // Fall back to auth.users.email for any user whose profiles.email is empty
+  // (e.g., OAuth signups where email landed after the on_auth_user_created
+  // trigger fired). listUsers paginates — walk every page.
+  const authEmails: Record<string, string> = {};
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+    if (error || !data?.users?.length) break;
+    for (const u of data.users) {
+      if (u.email) authEmails[u.id] = u.email;
+    }
+    if (data.users.length < perPage) break;
+  }
+
+  const ownerEmails: Record<string, string> = { ...authEmails };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const p of (allProfiles ?? []) as any[]) {
+    if (p.email) ownerEmails[p.id] = p.email;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userRows = ((allProfiles ?? []) as any[]).map((p) => ({
