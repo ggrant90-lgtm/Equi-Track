@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useChat } from "./ChatProvider";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+import { BarnPilotIcon } from "./BarnPilotIcon";
 import { ASSISTANT_NAME } from "@/lib/assistant/config";
 
 /**
@@ -84,7 +85,7 @@ function Header({
     >
       <div className="flex items-center gap-2">
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brass-gold text-barn-dark">
-          <HorseIcon />
+          <BarnPilotIcon size={18} strokeWidth={1.8} />
         </div>
         <div className="font-serif text-base font-semibold text-barn-dark">
           {ASSISTANT_NAME}
@@ -111,25 +112,6 @@ function Header({
         </button>
       </div>
     </div>
-  );
-}
-
-function HorseIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={18}
-      height={18}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 21c0-3 1-5 3-6.5C9.4 13.4 9 12.5 9 11c0-3 2-5 5-5 1.4 0 2.4.5 3 1l2-2 1 3-2 1c.6.9 1 2 1 3.5 0 4-3 6-7 6.5L11 21" />
-      <circle cx="14" cy="9.5" r="0.5" fill="currentColor" />
-    </svg>
   );
 }
 
