@@ -1,17 +1,24 @@
 /**
- * BarnPilot brand mark — horseshoe flanked by delta-wing aviator triangles.
+ * BarnPilot brand mark — horseshoe (opens up, prongs + caulks at top) with
+ * wide aviator wings sweeping outward.
  *
- * Stroke-based line art so it inherits the surrounding color via
- * currentColor. Reads cleanly from ~16px (TopNav button) to ~32px+.
+ * Stroke-based so it inherits the surrounding color via currentColor.
+ * Default strokeWidth 2.2 is on the bold side — the icon should have
+ * presence at 24-32px in the TopNav.
  *
- * If you want to tweak:
- *   - Horseshoe shape: the first <path> (M..V..a..V..)
- *   - Caulks (heel nubs): the two short horizontal <path>s
- *   - Wings: the two triangular <path>s (delta-wing geometry, no curves)
+ * Composition:
+ *   - Horseshoe is upright (lucky orientation, matches reference logo)
+ *   - Caulks sit on top of the prongs
+ *   - Two flat-then-tapered feather sweeps per wing — geometric, not bird-like
+ *
+ * Tweaking guide:
+ *   - Make horseshoe taller: change the `V 12` to e.g. `V 13` (longer prongs)
+ *   - Wider wings: extend the second coord of each wing path further from 1.5/22.5
+ *   - More feathers per wing: add another <path> between 9-15 inner and the outer tip
  */
 export function BarnPilotIcon({
   size = 24,
-  strokeWidth = 1.6,
+  strokeWidth = 2.2,
   className,
 }: {
   size?: number;
@@ -31,17 +38,19 @@ export function BarnPilotIcon({
       className={className}
       aria-hidden="true"
     >
-      {/* Horseshoe (U-shape opening down, centered) */}
-      <path d="M8 16 V11 a4 4 0 0 1 8 0 V16" />
-      {/* Caulks (heel nubs) */}
-      <path d="M6.8 16.3 h2.4" />
-      <path d="M14.8 16.3 h2.4" />
+      {/* Horseshoe — opens UP, big U-shape with arc at bottom */}
+      <path d="M 9 6 V 12 a 3 3 0 0 0 6 0 V 6" />
+      {/* Caulks (heel nubs) at the top of each prong */}
+      <path d="M 7.8 6 H 10.2" />
+      <path d="M 13.8 6 H 16.2" />
 
-      {/* Left delta wing — geometric triangle, no feathers */}
-      <path d="M8 12 L2.5 13.5 L8 15" />
+      {/* Left wing — two flat feather sweeps */}
+      <path d="M 9 10 L 1.5 11" />
+      <path d="M 9 12 L 3.5 13.5" />
 
-      {/* Right delta wing (mirror) */}
-      <path d="M16 12 L21.5 13.5 L16 15" />
+      {/* Right wing — mirror */}
+      <path d="M 15 10 L 22.5 11" />
+      <path d="M 15 12 L 20.5 13.5" />
     </svg>
   );
 }
