@@ -7,7 +7,6 @@ import {
   IconHorses,
   IconKey,
   IconLedger,
-  IconPlay,
   IconReports,
   IconUser,
 } from "@/components/protected/nav-icons";
@@ -29,17 +28,20 @@ export function navLinkClass(active: boolean): string {
   ].join(" ");
 }
 
+// Authenticated sidebar order. BarnPilot is injected by SidebarNavList
+// right after Dashboard (the first item), so the explicit list here
+// starts at "Horses" implicitly — Dashboard appears first, BarnPilot
+// next, then the rest in the order below.
 export const fullNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: <IconHome className="h-5 w-5" /> },
   { href: "/horses", label: "Horses", icon: <IconHorses className="h-5 w-5" /> },
-  { href: "/logs", label: "Barn Logs", icon: <IconReports className="h-5 w-5" /> },
-  { href: "/keys", label: "Keys", icon: <IconKey className="h-5 w-5" /> },
-  { href: "/calendar", label: "Calendar", icon: <IconCalendar className="h-5 w-5" /> },
-  { href: "/breeders-pro", label: "Breeders Pro", icon: <IconEmbryo className="h-5 w-5" /> },
-  { href: "/business-pro", label: "Business Pro", icon: <IconLedger className="h-5 w-5" /> },
-  { href: "/reports", label: "Reports", icon: <IconReports className="h-5 w-5" /> },
   { href: "/identify", label: "Scan", icon: <IconCamera className="h-5 w-5" /> },
-  { href: "/learn", label: "Learn", icon: <IconPlay className="h-5 w-5" /> },
+  { href: "/calendar", label: "Calendar", icon: <IconCalendar className="h-5 w-5" /> },
+  { href: "/logs", label: "Barn Logs", icon: <IconReports className="h-5 w-5" /> },
+  { href: "/reports", label: "Reports", icon: <IconReports className="h-5 w-5" /> },
+  { href: "/keys", label: "Keys", icon: <IconKey className="h-5 w-5" /> },
+  { href: "/business-pro", label: "Business Pro", icon: <IconLedger className="h-5 w-5" /> },
+  { href: "/breeders-pro", label: "Breeders Pro", icon: <IconEmbryo className="h-5 w-5" /> },
 ];
 
 export const supportNav: NavItem[] = [
