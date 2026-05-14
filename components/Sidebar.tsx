@@ -3,7 +3,9 @@
 import { BarnSwitcher } from "@/components/BarnSwitcher";
 import { isNavActive, navLinkClass, supportNav, type NavItem } from "@/components/nav-config";
 import type { BarnSummary } from "@/components/protected/ProtectedChrome";
+import { BarnPilotSidebarItem } from "@/components/assistant/BarnPilotSidebarItem";
 import Link from "next/link";
+import { Fragment } from "react";
 
 export function SidebarBrand({
   barnName,
@@ -41,30 +43,32 @@ export function SidebarNavList({
 }) {
   return (
     <nav className="flex flex-1 flex-col gap-0.5 p-3" aria-label="Main navigation">
-      {items.map((item) =>
-        item.external ? (
-          <a
-            key={item.href}
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={navLinkClass(false)}
-          >
-            {item.icon}
-            {item.label}
-          </a>
-        ) : (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={navLinkClass(isNavActive(pathname, item.href))}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        )
-      )}
+      {items.map((item, idx) => (
+        <Fragment key={item.href}>
+          {item.external ? (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={navLinkClass(false)}
+            >
+              {item.icon}
+              {item.label}
+            </a>
+          ) : (
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={navLinkClass(isNavActive(pathname, item.href))}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          )}
+          {/* BarnPilot lives right below Dashboard. */}
+          {idx === 0 && <BarnPilotSidebarItem onNavigate={onNavigate} />}
+        </Fragment>
+      ))}
 
       {/* Support section */}
       <div className="mt-auto border-t border-brass-gold/10 pt-2">

@@ -1,7 +1,6 @@
 "use client";
 
 import { IconChevronDown, IconMenu } from "@/components/protected/nav-icons";
-import { BarnPilotTopNavButton } from "@/components/assistant/BarnPilotTopNavButton";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -56,7 +55,6 @@ export function TopNav({
         <Link href="/dashboard" className="font-serif text-lg font-semibold text-parchment md:hidden">
           BarnBook
         </Link>
-        <BarnPilotTopNavButton />
         {hasBarn && barnName ? (
           <span className="hidden max-w-[40vw] truncate text-center text-sm text-muted-tan md:inline lg:absolute lg:left-1/2 lg:-translate-x-1/2">
             {barnName}
