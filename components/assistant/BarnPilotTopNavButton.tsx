@@ -17,9 +17,9 @@ export function BarnPilotTopNavButton() {
       aria-label="Open BarnPilot"
       aria-pressed={open}
       onClick={() => setOpen(!open)}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-brass-gold transition hover:bg-brass-gold/15 active:scale-95"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-brass-gold transition hover:bg-brass-gold/15 active:scale-95"
     >
-      <BarnPilotIcon size={22} strokeWidth={1.7} />
+      <BarnPilotIcon size={30} strokeWidth={2.2} />
     </button>
   );
 }

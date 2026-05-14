@@ -84,8 +84,8 @@ function Header({
       }}
     >
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brass-gold text-barn-dark">
-          <BarnPilotIcon size={18} strokeWidth={1.8} />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brass-gold text-barn-dark">
+          <BarnPilotIcon size={22} strokeWidth={2.0} />
         </div>
         <div className="font-serif text-base font-semibold text-barn-dark">
           {ASSISTANT_NAME}
