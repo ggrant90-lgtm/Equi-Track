@@ -29,8 +29,8 @@ export function BarnPilotSidebarItem({
       className={`${navLinkClass(false)} w-full text-left`}
       aria-label="Open BarnPilot AI assistant"
     >
-      <BarnPilotIcon className="h-5 w-5" strokeWidth={2.0} />
-      <span className="flex-1 truncate">BarnPilot · AI Assistant</span>
+      <BarnPilotIcon className="h-5 w-5" strokeWidth={2} />
+      <span className="flex-1 truncate">BarnPilot AI</span>
     </button>
   );
 }
