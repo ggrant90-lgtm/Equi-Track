@@ -59,45 +59,46 @@ export function ProtectedChrome({
 
   return (
     <ToastProvider>
-      <div className="flex min-h-full flex-col md:flex-row">
-        <DesktopSidebar
-          navItems={navItems}
-          pathname={pathname}
-          barnName={barnName}
-          hasBarn={hasBarn}
-          allBarns={allBarns}
-          activeBarnId={activeBarnId}
-        />
-        <MobileSidebarDrawer
-          open={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          navItems={navItems}
-          pathname={pathname}
-          barnName={barnName}
-          hasBarn={hasBarn}
-          allBarns={allBarns}
-          activeBarnId={activeBarnId}
-        />
-
-        <div className="flex min-h-full min-w-0 flex-1 flex-col">
-          <TopNav
-            displayName={displayName}
-            email={email}
-            avatarUrl={avatarUrl}
+      <BarnPilot>
+        <div className="flex min-h-full flex-col md:flex-row">
+          <DesktopSidebar
+            navItems={navItems}
+            pathname={pathname}
             barnName={barnName}
             hasBarn={hasBarn}
-            menuOpen={menuOpen}
-            setMenuOpen={setMenuOpen}
-            onOpenMobileSidebar={() => setMobileOpen(true)}
-            onSignOut={signOut}
+            allBarns={allBarns}
+            activeBarnId={activeBarnId}
+          />
+          <MobileSidebarDrawer
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            navItems={navItems}
+            pathname={pathname}
+            barnName={barnName}
+            hasBarn={hasBarn}
+            allBarns={allBarns}
+            activeBarnId={activeBarnId}
           />
 
-          <main className="flex-1 bg-parchment pb-20 text-barn-dark md:pb-6">{children}</main>
+          <div className="flex min-h-full min-w-0 flex-1 flex-col">
+            <TopNav
+              displayName={displayName}
+              email={email}
+              avatarUrl={avatarUrl}
+              barnName={barnName}
+              hasBarn={hasBarn}
+              menuOpen={menuOpen}
+              setMenuOpen={setMenuOpen}
+              onOpenMobileSidebar={() => setMobileOpen(true)}
+              onSignOut={signOut}
+            />
 
-          <MobileBottomNav navItems={navItems} pathname={pathname} />
+            <main className="flex-1 bg-parchment pb-20 text-barn-dark md:pb-6">{children}</main>
+
+            <MobileBottomNav navItems={navItems} pathname={pathname} />
+          </div>
         </div>
-      </div>
-      <BarnPilot />
+      </BarnPilot>
     </ToastProvider>
   );
 }
