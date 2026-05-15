@@ -1,16 +1,20 @@
 export const HORSE_SEX_OPTIONS = ["Mare", "Stallion", "Gelding", "Unknown"] as const;
 
+/**
+ * Common breeds shown in the dropdown. "Other" pivots the form to a
+ * freeform text input so users can type Mustang, Friesian, Andalusian,
+ * etc. The DB column is plain text — any string is accepted.
+ *
+ * Less-common breeds (Appaloosa, Morgan, Tennessee Walker, Pony, Draft)
+ * were removed from the preset list to reduce visual clutter; users
+ * who want those just type them via "Other."
+ */
 export const HORSE_BREEDS = [
   "Thoroughbred",
   "Quarter Horse",
   "Warmblood",
   "Arabian",
   "Paint",
-  "Appaloosa",
-  "Morgan",
-  "Tennessee Walker",
-  "Pony",
-  "Draft",
   "Other",
 ] as const;
 

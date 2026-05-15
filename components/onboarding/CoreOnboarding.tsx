@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { HORSE_BREEDS } from "@/lib/horse-form-constants";
+import { BreedSelect } from "@/components/horse/BreedSelect";
 import {
   createHorseAction,
   updateHorsePhotoUrlAction,
@@ -473,23 +473,11 @@ function Step2({
             <span className="mb-1.5 block text-sm font-medium" style={{ color: "rgba(42,64,49,0.8)" }}>
               Breed (optional)
             </span>
-            <select
+            <BreedSelect
               value={horseBreed}
-              onChange={(e) => setHorseBreed(e.target.value)}
+              onChange={setHorseBreed}
               className="w-full rounded-xl border px-3 py-3 outline-none"
-              style={{
-                borderColor: "rgba(42,64,49,0.15)",
-                color: "#2a4031",
-                background: "white",
-              }}
-            >
-              <option value="">—</option>
-              {HORSE_BREEDS.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
+            />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium" style={{ color: "rgba(42,64,49,0.8)" }}>

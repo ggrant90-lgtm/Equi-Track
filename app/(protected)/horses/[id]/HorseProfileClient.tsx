@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { HORSE_BREEDS, HORSE_SEX_OPTIONS, BREEDING_ROLES, BREEDING_ROLE_LABELS } from "@/lib/horse-form-constants";
+import { HORSE_SEX_OPTIONS, BREEDING_ROLES, BREEDING_ROLE_LABELS } from "@/lib/horse-form-constants";
+import { BreedSelect } from "@/components/horse/BreedSelect";
 import { getHorseDisplayName, getHorseSecondaryName } from "@/lib/horse-name";
 import { uploadHorseProfilePhoto } from "@/lib/horse-photo";
 import { LogSummaryBar } from "@/components/LogSummaryBar";
@@ -653,14 +654,16 @@ export function HorseProfileClient({
                       Shown as the main label on this horse&apos;s profile and on horse cards.
                     </p>
                   </fieldset>
-                  <Select label="Breed" name="breed" defaultValue={horse.breed ?? ""} disabled={fieldsDisabled}>
-                    <option value="">—</option>
-                    {HORSE_BREEDS.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
-                  </Select>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-barn-dark/60">
+                      Breed
+                    </label>
+                    <BreedSelect
+                      name="breed"
+                      defaultValue={horse.breed ?? ""}
+                      className="w-full rounded-xl border border-barn-dark/15 bg-white px-3 py-2 text-sm text-barn-dark outline-none focus:border-brass-gold focus:ring-2 focus:ring-brass-gold/25 disabled:bg-barn-dark/5"
+                    />
+                  </div>
                   <Select label="Sex" name="sex" defaultValue={horse.sex ?? ""} disabled={fieldsDisabled}>
                     <option value="">—</option>
                     {HORSE_SEX_OPTIONS.map((s) => (

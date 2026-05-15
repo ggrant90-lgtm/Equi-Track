@@ -4,6 +4,7 @@ import { createHorseAction } from "@/app/(protected)/actions/horse";
 import { updateHorsePhotoUrlAction } from "@/app/(protected)/actions/horse";
 import { StallPurchaseFlow, type StallFlowBarnOption } from "@/components/stalls/StallPurchaseFlow";
 import { HORSE_BREEDS, HORSE_SEX_OPTIONS } from "@/lib/horse-form-constants";
+import { BreedSelect } from "@/components/horse/BreedSelect";
 import { uploadHorseProfilePhoto } from "@/lib/horse-photo";
 import { createHorseDocumentAction } from "@/app/(protected)/actions/horse-documents";
 import { ScanEntryButton } from "@/components/document-scanner/ScanEntryButton";
@@ -302,20 +303,12 @@ export function NewHorseShell({
           >
             Breed
           </label>
-          <select
+          <BreedSelect
             id="breed"
-            name="breed"
-            className={inputClass}
             value={breed}
-            onChange={(e) => setBreed(e.target.value)}
-          >
-            <option value="">Select…</option>
-            {HORSE_BREEDS.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
+            onChange={setBreed}
+            className={inputClass}
+          />
         </div>
         <div>
           <label
@@ -466,7 +459,9 @@ export function NewHorseShell({
   );
 }
 
-// Try to map arbitrary breed/sex strings to the allowed dropdown values.
+// Try to map arbitrary breed strings to the allowed preset values
+// (case-insensitive). Anything that doesn't match a preset is passed
+// through as-is — BreedSelect will detect it and pivot to custom mode.
 function matchBreed(value: string): string {
   const v = value.trim().toLowerCase();
   const match = HORSE_BREEDS.find((b) => b.toLowerCase() === v);
