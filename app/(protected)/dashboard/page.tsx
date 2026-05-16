@@ -5,6 +5,7 @@ import { getTodayAndUpcoming } from "@/app/(protected)/actions/calendar";
 import { getEffectiveCapacityMap } from "@/lib/stalls-query";
 import { getModuleAccess } from "@/lib/modules-query";
 import { getOnboardingState } from "@/lib/onboarding-query";
+import { runCogginsExpiryCheck } from "@/lib/engagement/notifications/scheduled";
 import { createServerComponentClient } from "@/lib/supabase-server";
 import type { ActivityLog, Barn, Horse } from "@/lib/types";
 import Link from "next/link";
@@ -22,6 +23,11 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // Engagement: scheduled coggins-expiry check. Coalesced to one
+  // notification per user per week (see scheduled.ts). Fire-and-forget
+  // — page render must not wait on it.
+  void runCogginsExpiryCheck(supabase, user.id);
 
   // ── My Barns: barns the user owns ──
   const { data: ownedBarns } = await supabase

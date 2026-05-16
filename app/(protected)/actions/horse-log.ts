@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { runEngagementHooks } from "@/lib/engagement/dispatcher";
+import { stashPendingCelebrations } from "@/lib/engagement/pending-celebrations";
 
 function todayISODate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -30,7 +32,7 @@ export async function submitHorseLogAction(
 
   const { data: horse } = await supabase
     .from("horses")
-    .select("barn_id")
+    .select("id, barn_id, name")
     .eq("id", horseId)
     .single();
 
@@ -41,6 +43,18 @@ export async function submitHorseLogAction(
 
   const logType = t as LogType;
 
+  // Fetch the actor's name for activity-feed notifications. Cheap
+  // single-row lookup; happens once per log create.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const actorName =
+    (profile?.full_name as string | null)?.trim() ||
+    user.email?.split("@")[0] ||
+    "A teammate";
+
   const activityTypes = ["exercise", "pony", "feed", "medication", "note", "breed_data"] as const;
   if ((activityTypes as readonly string[]).includes(logType)) {
     const err = await insertActivity(supabase, horseId, user.id, horse.barn_id, logType as "exercise" | "pony" | "feed" | "medication" | "note" | "breed_data", formData);
@@ -49,6 +63,23 @@ export async function submitHorseLogAction(
         `/horses/${horseId}?tab=activity&error=${encodeURIComponent(err)}`,
       );
     }
+
+    // Engagement: streak + celebration checks + activity fanout. Best-
+    // effort — failures inside the dispatcher are swallowed and never
+    // block the redirect.
+    const eng = await runEngagementHooks(supabase, {
+      userId: user.id,
+      event: "log_created",
+      barnId: horse.barn_id,
+      horseId: horse.id,
+      horseName: horse.name,
+      actorName,
+      logType,
+    });
+    if (eng.celebrations.length > 0) {
+      await stashPendingCelebrations(eng.celebrations);
+    }
+
     revalidatePath(`/horses/${horseId}`);
     redirect(`/horses/${horseId}?tab=activity`);
   }
@@ -59,6 +90,20 @@ export async function submitHorseLogAction(
       `/horses/${horseId}?tab=health&error=${encodeURIComponent(err)}`,
     );
   }
+
+  const eng = await runEngagementHooks(supabase, {
+    userId: user.id,
+    event: "log_created",
+    barnId: horse.barn_id,
+    horseId: horse.id,
+    horseName: horse.name,
+    actorName,
+    logType,
+  });
+  if (eng.celebrations.length > 0) {
+    await stashPendingCelebrations(eng.celebrations);
+  }
+
   revalidatePath(`/horses/${horseId}`);
   redirect(`/horses/${horseId}?tab=health`);
 }

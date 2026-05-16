@@ -5,6 +5,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { fullNav, reducedNav } from "@/components/nav-config";
 import { TopNav } from "@/components/TopNav";
 import { ToastProvider } from "@/components/ui/Toast";
+import { CelebrationProvider } from "@/components/engagement/CelebrationProvider";
 import { BarnPilot } from "@/components/assistant/BarnPilot";
 import { supabase } from "@/lib/supabase";
 import { usePathname, useRouter } from "next/navigation";
@@ -59,6 +60,7 @@ export function ProtectedChrome({
 
   return (
     <ToastProvider>
+      <CelebrationProvider>
       <BarnPilot>
         <div className="flex min-h-full flex-col md:flex-row">
           <DesktopSidebar
@@ -99,6 +101,7 @@ export function ProtectedChrome({
           </div>
         </div>
       </BarnPilot>
+      </CelebrationProvider>
     </ToastProvider>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { IconChevronDown, IconMenu } from "@/components/protected/nav-icons";
+import { NotificationBell } from "@/components/engagement/NotificationBell";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -62,7 +63,9 @@ export function TopNav({
         ) : null}
       </div>
 
-      <div className="relative" ref={menuRef}>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <div className="relative" ref={menuRef}>
         <button
           type="button"
           className="flex max-w-[14rem] items-center gap-2 rounded-xl border border-brass-gold/20 bg-barn-panel px-2 py-1.5 text-left text-sm text-parchment hover:border-brass-gold/40"
@@ -117,6 +120,7 @@ export function TopNav({
             </button>
           </div>
         ) : null}
+        </div>
       </div>
     </header>
   );

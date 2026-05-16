@@ -6,6 +6,8 @@ import { ensureClientForOwnerName } from "@/lib/clients-sync";
 import { getBarnCapacitySnapshot } from "@/lib/plans.server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createServerComponentClient } from "@/lib/supabase-server";
+import { runEngagementHooks } from "@/lib/engagement/dispatcher";
+import { stashPendingCelebrations } from "@/lib/engagement/pending-celebrations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -95,6 +97,20 @@ export async function createHorseAction(
 
   // Auto-sync owner_name → Business Pro Clients (no-op for non-BP barns).
   const sync = await ensureClientForOwnerName(adminClient, ctx.barn.id, owner_name);
+
+  // Engagement: first_horse celebration + (future) barn-milestone
+  // celebrations. Failures are swallowed inside the dispatcher.
+  const eng = await runEngagementHooks(supabase, {
+    userId: user.id,
+    event: "horse_created",
+    barnId: ctx.barn.id,
+    horseId: horse.id,
+    horseName: name,
+    barnName: ctx.barn.name,
+  });
+  if (eng.celebrations.length > 0) {
+    await stashPendingCelebrations(eng.celebrations);
+  }
 
   revalidatePath("/horses");
   revalidatePath("/dashboard");
