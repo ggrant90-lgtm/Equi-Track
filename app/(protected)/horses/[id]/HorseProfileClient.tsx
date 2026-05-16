@@ -21,6 +21,7 @@ import { BreedSelect } from "@/components/horse/BreedSelect";
 import { getHorseDisplayName, getHorseSecondaryName } from "@/lib/horse-name";
 import { uploadHorseProfilePhoto } from "@/lib/horse-photo";
 import { LogSummaryBar } from "@/components/LogSummaryBar";
+import { HorseCompletenessBar } from "@/components/engagement/HorseCompletenessBar";
 import { DocumentsTab } from "./DocumentsTab";
 import type { ActivityLog, Flush, HealthRecord, Horse, HorseStay, LogMedia, LogEntryLineItem, Pregnancy } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
@@ -62,6 +63,7 @@ export function HorseProfileClient({
   horse,
   canEdit,
   initialTab,
+  completeness,
   activities,
   healthRows,
   accessRows,
@@ -97,6 +99,7 @@ export function HorseProfileClient({
   horse: Horse;
   canEdit: boolean;
   initialTab: string;
+  completeness: import("@/lib/engagement/horse-completeness").HorseCompletenessResult;
   activities: ActivityLog[];
   healthRows: HealthRecord[];
   accessRows: { label: string; sub: string; kind: string }[];
@@ -438,7 +441,7 @@ export function HorseProfileClient({
       </div>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="font-serif text-3xl font-semibold text-barn-dark">
             {getHorseDisplayName(horse)}
           </h1>
@@ -448,6 +451,9 @@ export function HorseProfileClient({
             </p>
           )}
           <p className="text-sm text-barn-dark/55">{horse.breed ?? "Horse"}</p>
+          <div className="mt-2 max-w-sm">
+            <HorseCompletenessBar result={completeness} />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {!editing && (canCreateAnyLog || canEditProfile) ? (

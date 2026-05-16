@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { HorseProfileClient } from "./HorseProfileClient";
 import { QuickRecordProfile } from "@/components/service-barn/QuickRecordProfile";
 import { AutoLinkBanner } from "@/components/service-barn/AutoLinkBanner";
+import { computeHorseCompleteness } from "@/lib/engagement/horse-completeness";
 
 async function getOrigin(): Promise<string> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -633,6 +634,24 @@ export default async function HorseProfilePage({
         horse={horse}
         canEdit={canEdit}
         initialTab={tab}
+        completeness={computeHorseCompleteness({
+          horse,
+          hasAnyEntry:
+            ((activities ?? []) as unknown[]).length > 0 ||
+            ((healthRows ?? []) as unknown[]).length > 0,
+          hasCurrentCoggins: (() => {
+            const today = new Date().toISOString().slice(0, 10);
+            return horseDocuments.some(
+              (d) =>
+                /coggins/i.test(d.document_type) &&
+                d.expiration_date != null &&
+                d.expiration_date >= today,
+            );
+          })(),
+          hasRegistrationPapers: horseDocuments.some(
+            (d) => d.document_type === "registration",
+          ),
+        })}
         activities={(activities ?? []) as ActivityLog[]}
         healthRows={(healthRows ?? []) as HealthRecord[]}
         accessRows={accessRows}

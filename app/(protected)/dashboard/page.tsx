@@ -8,6 +8,7 @@ import { getOnboardingState } from "@/lib/onboarding-query";
 import { runBackfillIfNeeded } from "@/lib/engagement/backfill";
 import { runDashboardEngagementChecks } from "@/lib/engagement/dashboard-checks";
 import { runCogginsExpiryCheck } from "@/lib/engagement/notifications/scheduled";
+import { DashboardEngagementStrip } from "@/components/engagement/DashboardEngagementStrip";
 import { createServerComponentClient } from "@/lib/supabase-server";
 import type { ActivityLog, Barn, Horse } from "@/lib/types";
 import Link from "next/link";
@@ -513,6 +514,12 @@ export default async function DashboardPage() {
       : null;
 
   return (
+    <>
+      <DashboardEngagementStrip
+        activeBarnId={
+          primaryBarn && primaryBarn.id ? primaryBarn.id : null
+        }
+      />
     <DashboardTabs
       ownedBarns={(ownedBarns ?? []) as Barn[]}
       accessBarns={accessBarns}
@@ -540,5 +547,6 @@ export default async function DashboardPage() {
       recentBarnLogs={recentBarnLogs}
       loggableHorses={loggableHorses}
     />
+    </>
   );
 }
