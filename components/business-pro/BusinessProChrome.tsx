@@ -68,10 +68,16 @@ export function BusinessProChrome({
 
   const workspacePlaceholders: NavItem[] = [];
 
+  const analysis: NavGroup = {
+    label: "Analysis",
+    items: [
+      { href: "/business-pro/aging", label: "Aging Report", icon: <IconClock /> },
+    ],
+  };
+
   const analysisPlaceholders: NavItem[] = [
     { href: "#", label: "P&L Report", icon: <IconChart /> },
     { href: "#", label: "Cash Flow", icon: <IconTrend /> },
-    { href: "#", label: "Aging Report", icon: <IconClock /> },
     { href: "#", label: "Tax Prep", icon: <IconFolder /> },
   ];
 
@@ -161,9 +167,22 @@ export function BusinessProChrome({
           ))}
         </div>
 
-        {/* Analysis — all placeholders for now */}
+        {/* Analysis */}
         <div className="bp-nav-section">
-          <div className="bp-nav-label">Analysis</div>
+          <div className="bp-nav-label">{analysis.label}</div>
+          {analysis.items.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`bp-nav-item ${isActive(item.href) ? "bp-active" : ""}`}
+            >
+              {item.icon}
+              {item.label}
+              {typeof item.count === "number" && (
+                <span className="bp-count">{item.count}</span>
+              )}
+            </Link>
+          ))}
           {analysisPlaceholders.map((item) => (
             <div
               key={item.label}
