@@ -1,6 +1,7 @@
 import { createServerComponentClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import { NotificationPrefsForm } from "./NotificationPrefsForm";
+import { DashboardPrefsForm } from "./DashboardPrefsForm";
 
 /**
  * Settings landing. Phase 1 ships the notification-preferences
@@ -18,7 +19,7 @@ export default async function SettingsPage() {
   const { data: profile } = await (supabase as any)
     .from("profiles")
     .select(
-      "notifications_enabled, notification_prefs, nudges_disabled, current_streak, longest_streak",
+      "notifications_enabled, notification_prefs, ui_prefs, nudges_disabled, current_streak, longest_streak",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -31,6 +32,12 @@ export default async function SettingsPage() {
     reminders: prefs.reminders !== false,
     financial: prefs.financial !== false,
     tips: prefs.tips !== false,
+  };
+
+  const uiPrefs = (profile?.ui_prefs ?? {}) as Record<string, boolean>;
+  const dashboardInitial = {
+    showHealthRing: uiPrefs.show_health_ring !== false,
+    showStreakChip: uiPrefs.show_streak_chip !== false,
   };
 
   return (
@@ -52,6 +59,18 @@ export default async function SettingsPage() {
         </p>
         <div className="mt-4 rounded-2xl border border-barn-dark/10 bg-white p-5">
           <NotificationPrefsForm initial={initial} />
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="font-serif text-xl font-semibold text-barn-dark">
+          Dashboard
+        </h2>
+        <p className="mt-1 text-sm text-barn-dark/65">
+          Hide or show the at-a-glance widgets that sit above your dashboard.
+        </p>
+        <div className="mt-4 rounded-2xl border border-barn-dark/10 bg-white p-5">
+          <DashboardPrefsForm initial={dashboardInitial} />
         </div>
       </section>
     </div>

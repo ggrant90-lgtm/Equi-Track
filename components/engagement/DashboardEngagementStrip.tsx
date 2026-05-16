@@ -28,25 +28,31 @@ export async function DashboardEngagementStrip({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (supabase as any)
     .from("profiles")
-    .select("current_streak, longest_streak")
+    .select("current_streak, longest_streak, ui_prefs")
     .eq("id", user.id)
     .maybeSingle();
   const currentStreak = (profile?.current_streak as number | null) ?? 0;
   const longestStreak = (profile?.longest_streak as number | null) ?? 0;
+  const uiPrefs = (profile?.ui_prefs ?? {}) as Record<string, boolean>;
+  const wantsHealthRing = uiPrefs.show_health_ring !== false;
+  const wantsStreakChip = uiPrefs.show_streak_chip !== false;
 
   // Barn Health: only render the ring when we have a concrete active
-  // barn (not the "All Barns" view). Read cached value first; if it's
-  // missing entirely, compute live so the first visit isn't blank.
-  let healthSnapshot = activeBarnId
-    ? await getBarnHealthCached(supabase, activeBarnId)
-    : null;
+  // barn (not the "All Barns" view) AND the user hasn't hidden it via
+  // settings. Read cached value first; if it's missing entirely,
+  // compute live so the first visit isn't blank.
+  let healthSnapshot =
+    wantsHealthRing && activeBarnId
+      ? await getBarnHealthCached(supabase, activeBarnId)
+      : null;
   if (healthSnapshot && healthSnapshot.criteria.length === 0) {
     // Cache hit but no criteria — re-compute so the breakdown modal
     // works. Phase 3 can cache the breakdown alongside the score.
     healthSnapshot = await computeBarnHealth(supabase, activeBarnId!);
   }
 
-  const showStreak = !(currentStreak === 0 && longestStreak === 0);
+  const showStreak =
+    wantsStreakChip && !(currentStreak === 0 && longestStreak === 0);
   if (!showStreak && !healthSnapshot) return null;
 
   return (
