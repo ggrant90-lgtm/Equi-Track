@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { useBusinessProSession } from "./BusinessProSession";
+import { BarnPilotTopNavButton } from "@/components/assistant/BarnPilotTopNavButton";
 
 type NavItem = {
   href: string;
@@ -263,6 +264,16 @@ export function BusinessProChrome({
               );
             })}
           </nav>
+          <div
+            style={{
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <BarnPilotTopNavButton />
+          </div>
         </div>
         {children}
       </main>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { useBreedersProSession } from "./BreedersProSession";
+import { BarnPilotTopNavButton } from "@/components/assistant/BarnPilotTopNavButton";
 
 type NavItem = {
   href: string;
@@ -317,6 +318,7 @@ export function BreedersProChrome({
             })}
           </nav>
           <div className="bp-topbar-actions">
+            <BarnPilotTopNavButton />
             <button type="button" className="bp-cmdkey">
               Search
               <kbd>⌘K</kbd>
