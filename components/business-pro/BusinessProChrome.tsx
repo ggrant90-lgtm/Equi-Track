@@ -74,12 +74,11 @@ export function BusinessProChrome({
       { href: "/business-pro/pnl", label: "P&L Report", icon: <IconChart /> },
       { href: "/business-pro/cash-flow", label: "Cash Flow", icon: <IconTrend /> },
       { href: "/business-pro/aging", label: "Aging Report", icon: <IconClock /> },
+      { href: "/business-pro/tax-prep", label: "Tax Prep", icon: <IconFolder /> },
     ],
   };
 
-  const analysisPlaceholders: NavItem[] = [
-    { href: "#", label: "Tax Prep", icon: <IconFolder /> },
-  ];
+  const analysisPlaceholders: NavItem[] = [];
 
   const isActive = (href: string) => {
     if (href === "#") return false;
