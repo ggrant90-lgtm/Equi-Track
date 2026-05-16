@@ -179,7 +179,9 @@ export function NotificationBell() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-1rem))] max-w-sm overflow-hidden rounded-2xl border bg-parchment text-barn-dark shadow-2xl"
+          // Mobile: fixed full-width sheet pinned just below the top nav.
+          // sm+: regular dropdown anchored to the bell button.
+          className="fixed left-2 right-2 top-[3.75rem] z-50 overflow-hidden rounded-2xl border bg-parchment text-barn-dark shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[22rem]"
           style={{ borderColor: "rgba(201,168,76,0.35)" }}
         >
           <div
