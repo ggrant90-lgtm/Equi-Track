@@ -60,6 +60,13 @@ export interface GetTransactionsArgs {
   /** Cap per source — `null` skips the cap. Defaults to 5000 per source
    *  (15k total worst case) which is fine for any single year of records. */
   limitPerSource?: number | null;
+  /**
+   * Which timestamp column to apply the date range to. Defaults to
+   * `performed_at` (when the activity happened). Cash Flow uses
+   * `paid_at` (when the money actually moved). For paid_at, rows
+   * without a paid_at are also dropped from the result.
+   */
+  dateField?: "performed_at" | "paid_at";
 }
 
 export interface TransactionsResult {
@@ -80,13 +87,18 @@ export async function getTransactions(
 ): Promise<TransactionsResult> {
   if (args.barnIds.length === 0) return { rows: [], truncated: false };
   const limit = args.limitPerSource === null ? null : (args.limitPerSource ?? 5000);
+  const dateField = args.dateField ?? "performed_at";
 
-  // Helper to apply the optional date range to a query builder. activity
-  // and health use performed_at; barn_expenses also uses performed_at.
+  // Helper to apply the optional date range to a query builder. All
+  // three tables share the same column names so this is uniform.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function applyDate(q: any) {
-    if (args.startDate) q = q.gte("performed_at", args.startDate);
-    if (args.endDate) q = q.lte("performed_at", `${args.endDate.slice(0, 10)}T23:59:59.999Z`);
+    if (args.startDate) q = q.gte(dateField, args.startDate);
+    if (args.endDate)
+      q = q.lte(dateField, `${args.endDate.slice(0, 10)}T23:59:59.999Z`);
+    // When filtering on paid_at, exclude rows that haven't been paid
+    // yet — they're noise for any cash-movement view.
+    if (dateField === "paid_at") q = q.not("paid_at", "is", null);
     return q;
   }
 
@@ -115,7 +127,7 @@ export async function getTransactions(
       .not("cost_type", "is", null)
       .eq("status", "completed");
     q = applyDate(q);
-    q = q.order("performed_at", { ascending: false });
+    q = q.order(dateField, { ascending: false });
     if (limit !== null) q = q.limit(limit);
     return q;
   };
@@ -132,7 +144,7 @@ export async function getTransactions(
       .not("cost_type", "is", null)
       .eq("status", "completed");
     q = applyDate(q);
-    q = q.order("performed_at", { ascending: false });
+    q = q.order(dateField, { ascending: false });
     if (limit !== null) q = q.limit(limit);
     return q;
   };
@@ -147,7 +159,7 @@ export async function getTransactions(
       .in("barn_id", args.barnIds)
       .not("cost_type", "is", null);
     q = applyDate(q);
-    q = q.order("performed_at", { ascending: false });
+    q = q.order(dateField, { ascending: false });
     if (limit !== null) q = q.limit(limit);
     return q;
   };

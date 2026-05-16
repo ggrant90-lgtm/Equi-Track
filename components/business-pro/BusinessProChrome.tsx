@@ -72,12 +72,12 @@ export function BusinessProChrome({
     label: "Analysis",
     items: [
       { href: "/business-pro/pnl", label: "P&L Report", icon: <IconChart /> },
+      { href: "/business-pro/cash-flow", label: "Cash Flow", icon: <IconTrend /> },
       { href: "/business-pro/aging", label: "Aging Report", icon: <IconClock /> },
     ],
   };
 
   const analysisPlaceholders: NavItem[] = [
-    { href: "#", label: "Cash Flow", icon: <IconTrend /> },
     { href: "#", label: "Tax Prep", icon: <IconFolder /> },
   ];
 
