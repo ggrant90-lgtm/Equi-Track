@@ -129,6 +129,16 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
+      {/* Quick admin actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href="/admin/broadcasts"
+          className="inline-flex items-center gap-2 rounded-xl border border-barn-dark/15 bg-white px-4 py-2 text-sm font-medium text-barn-dark shadow-sm hover:border-brass-gold hover:bg-parchment"
+        >
+          📣 Send a broadcast
+        </Link>
+      </div>
+
       {/* Metrics */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
         {[
