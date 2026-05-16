@@ -62,12 +62,11 @@ export function BusinessProChrome({
       { href: "/business-pro/expenses", label: "Expenses", icon: <IconArrowDown /> },
       { href: "/business-pro/receipts", label: "Receipts", icon: <IconFolder /> },
       { href: "/business-pro/clients", label: "Clients", icon: <IconUsers /> },
+      { href: "/business-pro/transactions", label: "Transactions", icon: <IconList /> },
     ],
   };
 
-  const workspacePlaceholders: NavItem[] = [
-    { href: "#", label: "Transactions", icon: <IconList /> },
-  ];
+  const workspacePlaceholders: NavItem[] = [];
 
   const analysisPlaceholders: NavItem[] = [
     { href: "#", label: "P&L Report", icon: <IconChart /> },
