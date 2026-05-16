@@ -180,6 +180,10 @@ export async function runBackfillIfNeeded(
     if (totalEntries > 0) silentKeys.push("first_entry");
     if (nextLongest >= 7) silentKeys.push("streak_7");
     if (nextLongest >= 30) silentKeys.push("streak_30");
+    // Phase-2 first-time milestones: silently mark shown if the user
+    // is already past the threshold. Avoids surprise pops on a stale
+    // event months after it would have legitimately fired.
+    if (totalEntries >= 100) silentKeys.push("entry_count_100");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count: horseCount } = await (admin as any)
@@ -188,6 +192,15 @@ export async function runBackfillIfNeeded(
       .eq("created_by", userId)
       .eq("archived", false);
     if ((horseCount ?? 0) > 0) silentKeys.push("first_horse");
+
+    // Document scans: if the user has any horse_documents row, mark
+    // first_document_scan shown.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: docCount } = await (admin as any)
+      .from("horse_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("uploaded_by_user_id", userId);
+    if ((docCount ?? 0) > 0) silentKeys.push("first_document_scan");
 
     if (silentKeys.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

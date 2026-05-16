@@ -8,6 +8,8 @@ import { canUserUseDocumentScanner } from "@/lib/document-scanner/access";
 import { ensureClientForOwnerName } from "@/lib/clients-sync";
 import { HORSE_DOCUMENTS_BUCKET } from "@/lib/horse-documents";
 import type { ExtractedHorseData } from "@/lib/document-extraction-prompt";
+import { runEngagementHooks } from "@/lib/engagement/dispatcher";
+import { stashPendingCelebrations } from "@/lib/engagement/pending-celebrations";
 
 /** Guard: require the user has scanner access + edit rights on the horse. */
 async function requireScannerEdit(horseId: string) {
@@ -263,6 +265,39 @@ export async function createHorseDocumentAction(
     .single();
   if (error || !data) {
     return { error: error?.message ?? "Failed to save document" };
+  }
+
+  // Engagement: first_document_scan + all_coggins_current. Fire and
+  // forget — failures inside the dispatcher are swallowed.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: horseRow } = await (admin as any)
+      .from("horses")
+      .select("name, barn_id")
+      .eq("id", input.horseId)
+      .maybeSingle();
+    const { data: barnRow } = horseRow?.barn_id
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (admin as any)
+          .from("barns")
+          .select("name")
+          .eq("id", horseRow.barn_id)
+          .maybeSingle()
+      : { data: null };
+    const supabase = await createServerComponentClient();
+    const eng = await runEngagementHooks(supabase, {
+      userId: auth.userId,
+      event: "document_scanned",
+      barnId: auth.barnId,
+      horseId: input.horseId,
+      horseName: horseRow?.name ?? undefined,
+      barnName: barnRow?.name ?? undefined,
+    });
+    if (eng.celebrations.length > 0) {
+      await stashPendingCelebrations(eng.celebrations);
+    }
+  } catch {
+    /* engagement is best-effort */
   }
 
   revalidatePath(`/horses/${input.horseId}`);

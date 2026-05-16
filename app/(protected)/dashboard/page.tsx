@@ -6,6 +6,7 @@ import { getEffectiveCapacityMap } from "@/lib/stalls-query";
 import { getModuleAccess } from "@/lib/modules-query";
 import { getOnboardingState } from "@/lib/onboarding-query";
 import { runBackfillIfNeeded } from "@/lib/engagement/backfill";
+import { runDashboardEngagementChecks } from "@/lib/engagement/dashboard-checks";
 import { runCogginsExpiryCheck } from "@/lib/engagement/notifications/scheduled";
 import { createServerComponentClient } from "@/lib/supabase-server";
 import type { ActivityLog, Barn, Horse } from "@/lib/types";
@@ -26,12 +27,12 @@ export default async function DashboardPage() {
   if (!user) return null;
 
   // Engagement: one-time backfill so existing users see real signal
-  // in the bell (streak from history + welcome flight) — guarded by
-  // a unique celebration_key, so it's a no-op on every load after
-  // the first. Then the scheduled coggins-expiry check. Both are
-  // fire-and-forget — page render must not wait on engagement work.
+  // in the bell, scheduled coggins-expiry check, and the dashboard-
+  // load celebration checks (all_coggins_current, first_profitable_
+  // month). All are fire-and-forget — page render never waits.
   void runBackfillIfNeeded(supabase, user.id);
   void runCogginsExpiryCheck(supabase, user.id);
+  void runDashboardEngagementChecks(supabase, user.id);
 
   // ── My Barns: barns the user owns ──
   const { data: ownedBarns } = await supabase
