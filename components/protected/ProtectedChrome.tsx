@@ -6,6 +6,7 @@ import { fullNav, reducedNav } from "@/components/nav-config";
 import { TopNav } from "@/components/TopNav";
 import { ToastProvider } from "@/components/ui/Toast";
 import { CelebrationProvider } from "@/components/engagement/CelebrationProvider";
+import { NudgeToast } from "@/components/engagement/NudgeToast";
 import { BarnPilot } from "@/components/assistant/BarnPilot";
 import { supabase } from "@/lib/supabase";
 import { usePathname, useRouter } from "next/navigation";
@@ -97,6 +98,7 @@ export function ProtectedChrome({
 
             <main className="flex-1 bg-parchment pb-20 text-barn-dark md:pb-6">{children}</main>
 
+            <NudgeToast />
             <MobileBottomNav navItems={navItems} pathname={pathname} />
           </div>
         </div>
