@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { QueuedCelebration } from "./CelebrationProvider";
+import { ShareCelebrationModal } from "./ShareCelebrationModal";
 
 /**
  * Celebration overlay — the centered card the user sees when a
@@ -28,6 +29,7 @@ export function CelebrationOverlay({
   onDismiss: () => void;
 }) {
   const [closing, setClosing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const dismissMs = celebration.tier === "bold" ? 12000 : 8000;
 
   function close() {
@@ -37,18 +39,24 @@ export function CelebrationOverlay({
     setTimeout(onDismiss, 220);
   }
 
+  function openShare() {
+    setShareOpen(true);
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") close();
     }
     document.addEventListener("keydown", onKey);
-    const t = setTimeout(close, dismissMs);
+    // Don't auto-dismiss while the share modal is open — the user is
+    // mid-flow and shouldn't have the underlying overlay yanked.
+    const t = shareOpen ? null : setTimeout(close, dismissMs);
     return () => {
       document.removeEventListener("keydown", onKey);
-      clearTimeout(t);
+      if (t) clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [shareOpen]);
 
   const isBold = celebration.tier === "bold";
 
@@ -147,8 +155,7 @@ export function CelebrationOverlay({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Phase 2: open the share modal. Phase 1: ack only.
-                    close();
+                    openShare();
                   }}
                   className="rounded-xl border-2 px-4 py-2 text-sm font-medium transition hover:brightness-110"
                   style={{
@@ -191,6 +198,19 @@ export function CelebrationOverlay({
           </div>
         </div>
       </div>
+
+      {celebration.shareEnabled && (
+        <ShareCelebrationModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          target={{
+            message: celebration.shareMessage ?? celebration.title,
+            icon: celebration.icon ?? "🐴",
+            barnName: celebration.shareBarnName ?? null,
+            celebrationKey: celebration.key,
+          }}
+        />
+      )}
 
       <style jsx>{`
         @keyframes celebration-fade-in {

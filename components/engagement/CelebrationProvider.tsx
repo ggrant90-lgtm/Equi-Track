@@ -34,6 +34,8 @@ export interface QueuedCelebration {
   tier: "warm" | "bold";
   shareEnabled: boolean;
   shareMessage?: string;
+  /** Optional barn name to bake onto the share card. */
+  shareBarnName?: string;
 }
 
 interface CelebrationContextValue {

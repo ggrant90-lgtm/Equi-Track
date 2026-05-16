@@ -45,6 +45,9 @@ export interface CelebrationFire {
   tier: CelebrationTier;
   shareEnabled: boolean;
   shareMessage?: string;
+  /** Optional barn name baked onto the share card; the user can toggle
+   *  it off in the share modal for privacy. Set by barn-scoped defs. */
+  shareBarnName?: string;
 }
 
 export interface CelebrationDef {
@@ -209,6 +212,7 @@ function makeBarnMilestone(threshold: number, copy: {
         tier: "bold",
         shareEnabled: true,
         shareMessage: copy.share(barnName),
+        shareBarnName: ctx.barnName?.trim() || undefined,
       };
     },
   };
@@ -344,6 +348,7 @@ const ALL_COGGINS_CURRENT: CelebrationDef = {
       tier: "warm",
       shareEnabled: true,
       shareMessage: `Every horse at ${barnName} is show-ready — all coggins current ✅`,
+      shareBarnName: ctx.barnName?.trim() || undefined,
     };
   },
 };
